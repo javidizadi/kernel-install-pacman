@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+if [ "$(whoami)" != 'root' ]; then
+	echo "You are not root."
+	exit 1
+fi
+
+version_str=$1
+if [ -z "$1" ]; then
+	version_str=$(curl -sL 'https://api.github.com/repos/javidizadi/linux-cachyos/releases/latest' | jq -r ".tag_name")
+	echo "Installing the latest version ( ${version_str} )"
+fi
+
+version_str=$(echo "$version_str" | cut -d'v' -f2)
+
+cd /tmp || exit
+aria2c -o kern.tar --continue "https://github.com/javidizadi/linux-cachyos/releases/download/v${version_str}/linux-cachyos-${version_str}-x86_64.pkg.tar.zst"
+aria2c -o kern-head.tar --continue "https://github.com/javidizadi/linux-cachyos/releases/download/v${version_str}/linux-cachyos-headers-${version_str}-x86_64.pkg.tar.zst"
+pacman -U --confirm --needed /tmp/kern.tar /tmp/kern-head.tar
